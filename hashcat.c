@@ -10,23 +10,6 @@ __global__ void add_matrices(float *a, float *b, float *c, int n) {
   }
 }
 
-void hashcat_crack_pgp(char *password, char *hash) {
-  // Initialize hashcat
-  hashcat_ctx_t *ctx = hashcat_init();
-
-  // Add the hash to the hashcat queue
-  hashcat_add_hash(ctx, hash);
-
-  // Set the password list
-  hashcat_set_password_list(ctx, password);
-
-  // Crack the hash
-  hashcat_crack(ctx);
-
-  // Free the hashcat context
-  hashcat_free(ctx);
-}
-
 int main() {
   int n = 1024;
 
@@ -73,11 +56,6 @@ int main() {
   cudaFree(b_device);
   cudaFree(c_device);
 
-  // Crack the PGP hash
-  char *password = "password";
-  char *hash = "hash";
-  hashcat_crack_pgp(password, hash);
-
   // Read the encrypted file
   FILE *fp = fopen("encrypted.pgp", "rb");
   if (fp == NULL) {
@@ -88,7 +66,7 @@ int main() {
   // Decrypt the file
   char *decrypted_data = NULL;
   size_t decrypted_size = 0;
-  gpg_decrypt(fp, &decrypted_data, &decrypted_size);
+  decrypted_data = gpg_decrypt(fp, &decrypted_size);
   fclose(fp);
 
   // Print the decrypted data
@@ -96,6 +74,15 @@ int main() {
 
   // Free the memory
   free(decrypted_data);
+
+  // Hash the decrypted data
+  char *hash = hashcat(decrypted_data, decrypted_size);
+
+  // Print the hash
+  printf("Hash: %s\n", hash);
+
+  // Free the memory
+  free(hash);
 
   return 0;
 }
